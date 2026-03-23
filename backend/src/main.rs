@@ -15,6 +15,7 @@ use crate::state::ChainState;
 
 #[tokio::main]
 async fn main() {
+    // in-memory demo: prefab chain, users, empty mempool to start
     let state: SharedState = Arc::new(Mutex::new(ChainState::new()));
 
     let cors = CorsLayer::new()

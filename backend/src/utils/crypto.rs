@@ -1,13 +1,11 @@
-//! Firma Ed25519 sobre un payload canónico de transacción.
-//! Conceptualmente solo el dueño de la clave privada puede producir una firma válida;
-//! cualquiera puede verificarla con la clave pública.
+//! Ed25519 stuff for txs — private key signs, public key is enough to verify
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use sha2::{Digest, Sha256};
 
 const PAYLOAD_PREFIX: &str = "TX_V1";
 
-/// Bytes que se firman: cubre emisor, receptor, monto, tiempo e id (no reutilizable entre txs distintas).
+/// bytes we actually sign: from, to, amount, time, id — tweak any field and the sig won't match another tx
 pub fn transfer_signing_payload(from: &str, to: &str, amount: u64, timestamp_ms: i64, id: &str) -> Vec<u8> {
     format!(
         "{}|{}|{}|{}|{}|{}",
@@ -42,7 +40,7 @@ pub fn parse_signature_hex(signature_hex: &str) -> Result<Signature, String> {
     Ok(Signature::from_bytes(&arr))
 }
 
-/// Verifica que `signature_hex` sea válida para el payload derivado de los mismos campos.
+/// does the sig line up with that exact payload? if not, bail
 pub fn verify_transfer_signature(
     from: &str,
     to: &str,
@@ -59,7 +57,7 @@ pub fn verify_transfer_signature(
         .map_err(|_| "firma digital inválida (no coincide con el payload ni la clave pública)".to_string())
 }
 
-/// Dirección corta derivada de la clave pública (solo demo; no es un formato de red real).
+/// short address hashed from the pub key — demo-only, not a real chain format
 pub fn demo_address_from_verifying_key(vk: &VerifyingKey) -> String {
     let mut hasher = Sha256::new();
     hasher.update(vk.as_bytes());

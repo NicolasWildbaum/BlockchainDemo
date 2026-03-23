@@ -21,7 +21,7 @@ pub struct ChainState {
     pub blocks: Vec<Block>,
     pub mempool: Vec<TransferTx>,
     pub user_catalog: Vec<User>,
-    /// Claves privadas demo por usuario (solo backend; conceptualmente el emisor firma con esto).
+    /// each demo user's private key — irl you wouldn't stash these on the server like this
     pub user_signing_keys: HashMap<String, SigningKey>,
 }
 
@@ -78,7 +78,7 @@ impl ChainState {
         Ok(())
     }
 
-    /// Crea una transferencia firmada en nombre del emisor (demo), verifica firma y saldo, y la encola.
+    /// build a signed transfer for the sender (demo cheat), check sig + balance, queue in mempool
     pub fn add_transaction(
         &mut self,
         from: String,

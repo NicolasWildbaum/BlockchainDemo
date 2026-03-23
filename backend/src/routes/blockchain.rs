@@ -30,7 +30,7 @@ pub struct CreateTxBody {
     pub recipient: String,
     #[serde(deserialize_with = "deserialize_tx_amount")]
     pub amount: u64,
-    /// Solo demo didáctica: corrompe la firma para comprobar el rechazo en backend/UI.
+    /// demo knob: flip true to mangle the sig and watch backend/UI say nope
     #[serde(default)]
     pub demo_invalid_signature: bool,
 }

@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
+// dev proxy to the rust api so the browser doesn't whine about CORS
 export default defineConfig({
   plugins: [react()],
   server: {

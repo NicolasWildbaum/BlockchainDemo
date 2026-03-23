@@ -5,7 +5,7 @@ export type CoinbaseTx = {
   sender: string
   recipient: string
   amount: number
-  /** Emisión del protocolo (NICOCIN); no es firma de usuario. */
+  /** protocol NICOCIN mint — not a user-signed thing */
   is_protocol_coinbase?: boolean
 }
 
@@ -76,7 +76,7 @@ export async function getMempool(): Promise<TransferTx[]> {
   return res.json() as Promise<TransferTx[]>
 }
 
-/** Alias de GET /api/transactions/pending (misma respuesta que /mempool). */
+/** same payload as /mempool, different route name */
 export async function getTransactionsPending(): Promise<TransferTx[]> {
   const res = await fetch(`${PREFIX}/transactions/pending`)
   if (!res.ok) throw new Error(await parseErr(res))

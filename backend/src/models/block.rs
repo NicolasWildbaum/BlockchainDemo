@@ -6,7 +6,7 @@ use super::transaction::{CoinbaseTx, TransferTx};
 pub struct Block {
     pub index: u64,
     pub nonce: u64,
-    /// Nota libre / compatibilidad; el hash también incluye transacciones y coinbase.
+    /// freeform block note — hash still folds in txs + coinbase, not just this field
     pub data: String,
     pub previous_hash: String,
     pub hash: String,

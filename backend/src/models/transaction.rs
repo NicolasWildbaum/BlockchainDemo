@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Transacción firmada entre usuarios. El payload firmado incluye emisor, receptor, monto, tiempo e id.
+/// user-to-user transfer with a sig (payload is basically from, to, amount, time, id)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TransferTx {
     pub id: String,
@@ -13,11 +13,11 @@ pub struct TransferTx {
     #[serde(rename = "public_key")]
     pub public_key_hex: String,
     pub signature_hex: String,
-    /// En mempool: típicamente `valid_pending`. Solo informativo para la UI.
+    /// in mempool usually `valid_pending` — mostly eye candy for the UI
     pub status: String,
 }
 
-/// Emisión especial del protocolo (recompensa al minero). **No** es una transferencia firmada por un usuario.
+/// block reward the protocol mints for the miner — no user signed this
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CoinbaseTx {
     pub label: String,
@@ -26,7 +26,7 @@ pub struct CoinbaseTx {
     #[serde(rename = "recipient")]
     pub to: String,
     pub amount: u64,
-    /// Si es true, esta entrada es emisión del protocolo (no firma de usuario).
+    /// true = protocol emission, not a user signature situation
     #[serde(default)]
     pub is_protocol_coinbase: bool,
 }

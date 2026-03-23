@@ -7,6 +7,7 @@ use crate::models::Block;
 pub const DIFFICULTY_PREFIX: &str = "0000";
 pub const GENESIS_PREVIOUS_HASH: &str = "0000000000000000";
 
+// slap coinbase + txs into json for the tail of the hash string
 fn json_tail(coinbase: &Option<CoinbaseTx>, transactions: &[TransferTx]) -> String {
     #[derive(Serialize)]
     struct Tail<'a> {
@@ -20,7 +21,7 @@ fn json_tail(coinbase: &Option<CoinbaseTx>, transactions: &[TransferTx]) -> Stri
     serde_json::to_string(&tail).expect("tail serializes")
 }
 
-/// SHA-256 hex: index|nonce|data|previous_hash|json(coinbase,transactions)
+/// SHA-256 hex, roughly index|nonce|data|prev|json(coinbase + txs)
 pub fn hash_block(
     index: u64,
     nonce: u64,
