@@ -1,125 +1,83 @@
-use crate::models::block::{Block, CoinbaseTx};
-use crate::models::transaction::ConfirmedTransaction;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-#[derive(Serialize)]
-struct CoinbaseHashView<'a> {
-    tx_id: &'a str,
-    miner_account_id: u32,
-    amount: u64,
-}
+use crate::models::{CoinbaseTx, TransferTx};
+use crate::models::Block;
 
-#[derive(Serialize)]
-struct TxHashView<'a> {
-    id: &'a str,
-    from_account_id: u32,
-    to_account_id: u32,
-    amount: u64,
-    timestamp: String,
-}
+pub const DIFFICULTY_PREFIX: &str = "0000";
+pub const GENESIS_PREVIOUS_HASH: &str = "0000000000000000";
 
-#[derive(Serialize)]
-struct BlockHashPayload<'a> {
-    index: u64,
-    timestamp: String,
-    nonce: u64,
-    previous_hash: &'a str,
-    difficulty: u32,
-    coinbase: CoinbaseHashView<'a>,
-    transactions: Vec<TxHashView<'a>>,
-}
-
-pub fn bytes_to_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{:02x}", b)).collect()
-}
-
-pub fn sha256_hex(data: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(data.as_bytes());
-    bytes_to_hex(&hasher.finalize())
-}
-
-/// Canonical JSON payload used for PoW and integrity checks (excludes `hash` field).
-pub fn block_hash_payload(
-    index: u64,
-    timestamp: chrono::DateTime<chrono::Utc>,
-    nonce: u64,
-    previous_hash: &str,
-    difficulty: u32,
-    coinbase: &CoinbaseTx,
-    transactions: &[ConfirmedTransaction],
-) -> String {
-    let coinbase = CoinbaseHashView {
-        tx_id: coinbase.tx_id.as_str(),
-        miner_account_id: coinbase.miner_account_id,
-        amount: coinbase.amount,
-    };
-    let transactions: Vec<TxHashView> = transactions
-        .iter()
-        .map(|t| TxHashView {
-            id: t.id.as_str(),
-            from_account_id: t.from_account_id,
-            to_account_id: t.to_account_id,
-            amount: t.amount,
-            timestamp: t.timestamp.to_rfc3339(),
-        })
-        .collect();
-    let payload = BlockHashPayload {
-        index,
-        timestamp: timestamp.to_rfc3339(),
-        nonce,
-        previous_hash,
-        difficulty,
+fn json_tail(coinbase: &Option<CoinbaseTx>, transactions: &[TransferTx]) -> String {
+    #[derive(Serialize)]
+    struct Tail<'a> {
+        coinbase: &'a Option<CoinbaseTx>,
+        transactions: &'a [TransferTx],
+    }
+    let tail = Tail {
         coinbase,
         transactions,
     };
-    serde_json::to_string(&payload).expect("block hash payload serializes")
+    serde_json::to_string(&tail).expect("tail serializes")
 }
 
+/// SHA-256 hex: index|nonce|data|previous_hash|json(coinbase,transactions)
 pub fn hash_block(
     index: u64,
-    timestamp: chrono::DateTime<chrono::Utc>,
     nonce: u64,
+    data: &str,
     previous_hash: &str,
-    difficulty: u32,
-    coinbase: &CoinbaseTx,
-    transactions: &[ConfirmedTransaction],
+    coinbase: &Option<CoinbaseTx>,
+    transactions: &[TransferTx],
 ) -> String {
-    let payload = block_hash_payload(
-        index,
-        timestamp,
-        nonce,
-        previous_hash,
-        difficulty,
-        coinbase,
-        transactions,
+    let tail = json_tail(coinbase, transactions);
+    let payload = format!(
+        "{}|{}|{}|{}|{}",
+        index, nonce, data, previous_hash, tail
     );
-    sha256_hex(&payload)
+    let mut hasher = Sha256::new();
+    hasher.update(payload.as_bytes());
+    hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect()
 }
 
-pub fn hash_matches_difficulty(hash: &str, difficulty: u32) -> bool {
-    let prefix_len = difficulty as usize;
-    if prefix_len == 0 {
-        return true;
-    }
-    if hash.len() < prefix_len {
-        return false;
-    }
-    hash.chars()
-        .take(prefix_len)
-        .all(|c| c == '0')
+pub fn hash_matches_difficulty(hash: &str) -> bool {
+    hash.starts_with(DIFFICULTY_PREFIX)
 }
 
-/// Recompute hash for a stored block (uses its current fields except `hash` is ignored for input).
-pub fn hash_for_block(block: &Block) -> String {
-    hash_block(
+pub fn recompute_block_hash(block: &mut Block) {
+    block.hash = hash_block(
         block.index,
-        block.timestamp,
         block.nonce,
+        &block.data,
         &block.previous_hash,
-        block.difficulty,
         &block.coinbase,
         &block.transactions,
-    )
+    );
+}
+
+pub fn mine_nonce(
+    index: u64,
+    data: &str,
+    previous_hash: &str,
+    coinbase: &Option<CoinbaseTx>,
+    transactions: &[TransferTx],
+) -> (u64, String) {
+    let mut nonce = 0u64;
+    loop {
+        let h = hash_block(
+            index,
+            nonce,
+            data,
+            previous_hash,
+            coinbase,
+            transactions,
+        );
+        if hash_matches_difficulty(&h) {
+            return (nonce, h);
+        }
+        nonce += 1;
+    }
 }

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 52" fill="none" role="img" aria-label="NICOCIN">
+  <defs>
+    <linearGradient id="nicocin-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="45%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="nicocin-sky" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#nicocin-sky)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="14" width="18" height="18" rx="3" opacity="0.9"/>
+    <path d="M20 23h8" opacity="0.85"/>
+    <rect x="28" y="18" width="18" height="18" rx="3" opacity="0.8"/>
+    <path d="M46 27h8" opacity="0.85"/>
+    <rect x="54" y="10" width="18" height="18" rx="3"/>
+  </g>
+  <text
+    x="82"
+    y="38"
+    font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif"
+    font-size="30"
+    font-weight="800"
+    letter-spacing="0.06em"
+    fill="url(#nicocin-gold)"
+  >NICOCIN</text>
+</svg>

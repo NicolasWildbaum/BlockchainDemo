@@ -1,24 +1,25 @@
-use axum::routing::{get, post};
+use std::sync::Arc;
+
+use axum::routing::{get, post, put};
 use axum::Router;
+use tokio::sync::Mutex;
 
-use crate::app_state::AppState;
+use crate::state::ChainState;
 
-mod accounts;
-mod blockchain;
-mod health;
-mod mining;
-mod transactions;
+pub mod blockchain;
 
-pub fn api_router() -> Router<AppState> {
+pub type SharedState = Arc<Mutex<ChainState>>;
+
+pub fn api_router(state: SharedState) -> Router {
     Router::new()
-        .route("/health", get(health::health))
-        .route("/accounts", get(accounts::list_accounts))
-        .route("/accounts/:id", get(accounts::get_account))
-        .route("/transactions/pending", get(transactions::list_pending))
-        .route("/transactions", post(transactions::create_transaction))
-        .route("/blocks", get(blockchain::list_blocks))
-        .route("/blocks/:index", get(blockchain::get_block))
-        .route("/mine", post(mining::mine))
-        .route("/blockchain/validate", get(blockchain::validate_chain))
-        .route("/reset-demo", post(blockchain::reset_demo))
+        .route("/blocks", get(blockchain::get_blocks))
+        .route("/users", get(blockchain::get_users))
+        .route("/mempool", get(blockchain::get_mempool))
+        .route("/transactions/pending", get(blockchain::get_mempool))
+        .route("/transactions", post(blockchain::post_transaction))
+        .route("/blocks/:index", put(blockchain::put_block))
+        .route("/blocks/:index/mine", post(blockchain::mine_block))
+        .route("/validate", get(blockchain::validate))
+        .route("/reset", post(blockchain::reset))
+        .with_state(state)
 }

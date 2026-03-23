@@ -1,23 +1,17 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use super::transaction::ConfirmedTransaction;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CoinbaseTx {
-    pub tx_id: String,
-    pub miner_account_id: u32,
-    pub amount: u64,
-}
+use super::transaction::{CoinbaseTx, TransferTx};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Block {
     pub index: u64,
-    pub timestamp: DateTime<Utc>,
     pub nonce: u64,
+    /// Nota libre / compatibilidad; el hash también incluye transacciones y coinbase.
+    pub data: String,
     pub previous_hash: String,
     pub hash: String,
-    pub difficulty: u32,
-    pub coinbase: CoinbaseTx,
-    pub transactions: Vec<ConfirmedTransaction>,
+    #[serde(default)]
+    pub transactions: Vec<TransferTx>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coinbase: Option<CoinbaseTx>,
 }

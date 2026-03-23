@@ -1,66 +1,42 @@
-# Simulación de blockchain (demo educativa)
+# Demo blockchain (bloques + mempool + NICOCIN)
 
-Monorepo con **backend en Rust (Axum)** y **frontend en React + Vite + TypeScript + Tailwind**. Estado **solo en memoria** (sin base de datos). La API expone cuentas, mempool, bloques, minería PoW simplificada y validación de cadena.
+Rust (Axum) + React (Vite, TypeScript, Tailwind). Cadena de **5 bloques** con PoW (`0000…`), **mempool**, **transacciones simples** y **coinbase NICOCIN** al minar. Estado en memoria.
 
-## Requisitos
+## Usuarios
 
-- [Rust](https://rustup.rs/) (stable) y `cargo`
-- [Node.js](https://nodejs.org/) 18+ (probado con Vite 5 y Tailwind 3)
+- **Nico** (`nico`), **Martin** (`martin`), **Sofía** (`sofia`) — saldo inicial 1000 cada uno.
 
-## Cómo ejecutar
+## Coinbase
 
-### Backend (puerto 3000)
+Al minar un bloque se añade una transacción especial con `label` y `from` **NICOCIN**, `to` = minero (query `miner_id`), cantidad fija **50**.
 
-```bash
-cd backend
-cargo run
-```
+## Hash del bloque
 
-Deberías ver: `blockchain_demo API listening on http://127.0.0.1:3000`.
+`sha256("{index}|{nonce}|{data}|{previous_hash}|{json(coinbase,transactions)}")`
 
-### Frontend (puerto 5173, proxy `/api` → 3000)
-
-En otra terminal:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Abre la URL que indique Vite (normalmente `http://127.0.0.1:5173`). El frontend llama a la API vía proxy, así que el backend debe estar en marcha.
-
-## API (prefijo `/api`)
+## API (`/api`)
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/api/health` | Estado del servicio |
-| GET | `/api/accounts` | Lista de cuentas |
-| GET | `/api/accounts/:id` | Detalle de cuenta |
-| GET | `/api/transactions/pending` | Mempool |
-| POST | `/api/transactions` | Crear transacción (body JSON `from_account_id`, `to_account_id`, `amount`) |
-| GET | `/api/blocks` | Todos los bloques |
-| GET | `/api/blocks/:index` | Bloque por índice |
-| POST | `/api/mine` | Minar (body JSON `miner_account_id`, opcional `difficulty`, `max_transactions`) |
-| GET | `/api/blockchain/validate` | Validar estructura + PoW + replay económico |
-| POST | `/api/reset-demo` | Reiniciar demo (génesis + cuentas iniciales) |
+| GET | `/blocks` | Cadena |
+| GET | `/users` | Usuarios y saldos |
+| GET | `/mempool` | Pendientes |
+| POST | `/transactions` | `{ "sender", "recipient", "amount" }` (JSON; evita que traductores rompan el campo `to`) |
+| PUT | `/blocks/:index` | `{ "data"?, "nonce"? }` |
+| POST | `/blocks/:index/mine?miner_id=nico` | Incluye mempool + NICOCIN, PoW, re-enlaza siguientes |
+| GET | `/validate` | Validez estructural + libro |
+| POST | `/reset` | Reinicio |
 
-## Fases del proyecto
+## Ejecutar
 
-- **Fase 1–2** (este repo): esqueleto + backend funcional + dashboard mínimo con datos reales.
-- **Fase 3–4**: pulir UI (badges, loaders, tamper, dificultad en UI, etc.).
-- **Fase 5**: documentación técnica ampliada en `docs/` (opcional).
+```bash
+cd backend && cargo run
+cd frontend && npm install && npm run dev
+```
 
-## Arquitectura del backend
+## Flujo manual
 
-- `app_state.rs`: estado compartido (`Arc<RwLock<DemoState>>`), configuración y bloque génesis.
-- `models/`: dominio + DTOs (`dto.rs`).
-- `services/`: minería, cuentas, consultas de cadena.
-- `routes/`: handlers HTTP delgados.
-- `utils/hashing.rs`: payload canónico (JSON) + SHA-256 hex.
-- `utils/validation.rs`: validación de transacciones, bloques y cadena completa.
-
-## Commits sugeridos (si inicializas git)
-
-1. `chore: scaffold monorepo (backend + frontend)`
-2. `feat(api): blockchain simulation, PoW, mempool, REST`
+1. Crear transacciones → aparecen en **mempool**.
+2. Elegir **minero** (Nico/Martin/Sofía) y pulsar **Mine** en un bloque: se vacía la mempool en ese bloque, se añade **NICOCIN** y se recalcula el hash válido.
+3. Editar **data/nonce** rompe PoW o enlaces; **Mine** en bloques afectados para recuperar validez.
+4. **Reset** restaura cadena inicial y mempool vacío.

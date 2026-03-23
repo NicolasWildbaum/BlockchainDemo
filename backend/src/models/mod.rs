@@ -1,11 +1,7 @@
-pub mod account;
-pub mod block;
-pub mod blockchain;
-pub mod dto;
+mod block;
 pub mod transaction;
+mod user;
 
-pub use account::{Account, TxHistoryEntry, TxHistoryKind};
-pub use block::{Block, CoinbaseTx};
-pub use blockchain::Blockchain;
-pub use dto::*;
-pub use transaction::{ConfirmedTransaction, PendingTransaction};
+pub use block::Block;
+pub use transaction::{CoinbaseTx, TransferTx};
+pub use user::User;
